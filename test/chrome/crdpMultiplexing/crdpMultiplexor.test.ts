@@ -21,6 +21,7 @@ suite('CRDPMultiplexor', () => {
     let multiplexor: CRDPMultiplexor;
     let webSocketMock: Mock<StubSocket>;
     let socketMessageCallbacks: Function[];
+    let portNumber: number = Math.round(Math.random() * 10000) + 1000;
 
     setup(() => {
         let socket = new StubSocket();
@@ -40,7 +41,7 @@ suite('CRDPMultiplexor', () => {
                     cb('{"id":' + message.id + ', "result":{}}');
                 }
             });
-        multiplexor = new CRDPMultiplexor(webSocketMock.object);
+        multiplexor = new CRDPMultiplexor(webSocketMock.object, portNumber.toString());
     });
 
     teardown(() => {

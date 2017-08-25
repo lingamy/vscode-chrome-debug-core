@@ -105,15 +105,15 @@ export class ChromeConnection {
     /**
      * Attach the websocket to the first available tab in the chrome instance with the given remote debugging port number.
      */
-    public attach(address = '127.0.0.1', port = 9222, targetUrl?: string, timeout?: number, extraCRDPChannelPorts?: number[]): Promise<void> {
-        return this._attach(address, port, targetUrl, timeout, extraCRDPChannelPorts)
+    public attach(address = '127.0.0.1', port = 9222, targetUrl?: string, timeout?: number, extraCRDPChannelPorts?: number[], channelWithNoDebuggerNotification?: number): Promise<void> {
+        return this._attach(address, port, targetUrl, timeout, extraCRDPChannelPorts, channelWithNoDebuggerNotification)
             .then(() => { });
     }
 
-    public attachToWebsocketUrl(wsUrl: string, extraCRDPChannelPorts?: number[]): void {
+    public attachToWebsocketUrl(wsUrl: string, extraCRDPChannelPorts?: number[], channelWithNoDebuggerNotification? : number): void {
         this._socket = new LoggingSocket(wsUrl);
         if (extraCRDPChannelPorts && extraCRDPChannelPorts.length >= 1) {
-            this._crdpSocketMultiplexor = new CRDPMultiplexor(this._socket as any as LikeSocket);
+            this._crdpSocketMultiplexor = new CRDPMultiplexor(this._socket as any as LikeSocket, channelWithNoDebuggerNotification ? channelWithNoDebuggerNotification.toString() : '');
             extraCRDPChannelPorts.forEach(extraCRDPChannelPort => {
                 new WebSocketToLikeSocketProxy(extraCRDPChannelPort, this._crdpSocketMultiplexor.addChannel(`extraCRDPEndpoint ${extraCRDPChannelPort}`)).start();
             });
@@ -125,11 +125,11 @@ export class ChromeConnection {
         this._client.on('error', e => logger.error('Error handling message from target: ' + e.message));
     }
 
-    private _attach(address: string, port: number, targetUrl?: string, timeout = ChromeConnection.ATTACH_TIMEOUT, extraCRDPChannelPorts?: number[]): Promise<void> {
+    private _attach(address: string, port: number, targetUrl?: string, timeout = ChromeConnection.ATTACH_TIMEOUT, extraCRDPChannelPorts?: number[], channelWithNoDebuggerNotification?: number): Promise<void> {
         return utils.retryAsync(() => this._targetDiscoveryStrategy.getTarget(address, port, this._targetFilter, targetUrl), timeout, /*intervalDelay=*/200)
             .catch(err => Promise.reject(errors.runtimeConnectionTimeout(timeout, err.message)))
             .then(wsUrl => {
-                return this.attachToWebsocketUrl(wsUrl, extraCRDPChannelPorts);
+                return this.attachToWebsocketUrl(wsUrl, extraCRDPChannelPorts, channelWithNoDebuggerNotification);
             });
     }
 

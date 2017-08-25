@@ -84,11 +84,19 @@ export class CRDPMultiplexor {
         // The message is a notification, so it should go to all channels. The channels itself will filter based on the enabled domains
         const domain = extractDomain(message.method);
         for (const channel of this._channels) {
+            if ((this._channelWithNoDebuggerNotification) && (channel.name.indexOf(this._channelWithNoDebuggerNotification) >= 0) && (message.method.indexOf("Debugger") >= 0)) {
+                logger.log('CRDP Multiplexor - About to break the notification from channel: ' + channel.name);
+                logger.log('CRDP Multiplexor - About to break the notification to domain: ' + domain + ' with data: ' + data );
+                continue;
+            }
+
+            logger.log('CRDP Multiplexor - About to callDomainMessageCallbacks from channel: ' + channel.name);
+            logger.log('CRDP Multiplexor - About to callDomainMessageCallbacks to domain: ' + domain + ' with data: ' + data );
             channel.callDomainMessageCallbacks(domain, data);
         }
     }
 
-    constructor(private _wrappedLikeSocket: LikeSocket) {
+    constructor(private _wrappedLikeSocket: LikeSocket, private _channelWithNoDebuggerNotification?: string) {
         this._wrappedLikeSocket.on('message', data => this.onMessage(data));
     }
 

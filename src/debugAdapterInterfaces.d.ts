@@ -34,6 +34,9 @@ export interface ICommonRequestArgs {
 
     /** Private undocumented property to multiplex the CRDP connection into an additional channel */
     extraCRDPChannelPorts?: number[];
+
+    /** Private undocumented property to specify the channel port that debug adapter won't send debugger related notifications */
+    channelWithNoDebuggerNotification?: number;
 }
 
 export interface IRestartRequestArgs {
